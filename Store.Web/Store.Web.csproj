@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\API3\Store\Core\Store.Services\Store.Services.csproj" />
     <ProjectReference Include="..\..\..\API3\Store\Infrastructure\Store.Persistance\Store.Persistence.csproj" />
     <ProjectReference Include="..\..\..\API3\Store\Infrastructure\Store.Presentation\Store.Presentation.csproj" />
   </ItemGroup>

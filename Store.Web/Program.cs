@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Store.Domain.Contract;
 using Store.Persistance;
 using Store.Persistance.Data.Contexts;
+using Store.Persistence;
+using Store.Services;
+using Store.Services.Mapping.Products;
 using System.Threading.Tasks;
 
 
@@ -28,6 +31,10 @@ namespace Store.Web
             });
 
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<IServiceManager, ServiceManager>();
+            builder.Services.AddAutoMapper(M => M.AddProfile(new ProductProfile()));
+           
 
             var app = builder.Build();
 
