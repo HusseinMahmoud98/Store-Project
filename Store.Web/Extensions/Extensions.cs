@@ -1,0 +1,106 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Store.Domain.Contract;
+using Store.Persistence;
+using Store.Services;
+using Store.Shared.ErrorModels;
+using Store.Web.Middlewares;
+using System.Threading.Tasks;
+
+namespace Store.Web.Extensions
+{
+    public static class Extensions
+    {
+        public static IServiceCollection AddAllServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddWebServices();
+
+            services.AddInfrastructureServices(configuration);
+
+            services.AddApplicationServices(configuration);
+
+            services.ConfigureApiBehaviourOptions();
+
+            return services;
+        }
+
+
+        public static async Task<WebApplication> ConfigureMiddlewares(this WebApplication app)
+        {
+            #region Initialize Database
+            await app.SeedData(); 
+            #endregion
+
+
+
+            app.UseStaticFiles();
+
+            app.UseGlobalErrorHandling();
+            //app.UseMiddleware<GlobalErrorHandlingMiddleware>();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
+
+            app.MapControllers();
+            return app;
+        }
+
+
+
+        private static async Task<WebApplication> SeedData(this WebApplication app)
+        {
+            var scope = app.Services.CreateScope();
+            var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>(); //Ask Clr TO Create Object From IDbInitializer
+            await dbInitializer.InitializeAsync();
+            return app;
+        }
+
+        private static IServiceCollection ConfigureApiBehaviourOptions(this IServiceCollection services)
+        {
+            services.Configure<ApiBehaviorOptions>(config =>
+            {
+                config.InvalidModelStateResponseFactory = (actionContext) =>
+                {
+                    var errors = actionContext.ModelState.Where(M => M.Value.Errors.Any())
+                                                          .Select(M => new ValidationError()
+                                                          {
+                                                              Field = M.Key,
+                                                              Errors = M.Value.Errors.Select(E => E.ErrorMessage)
+                                                          }).ToList();
+
+                    var response = new ValidationErrorResponse()
+                    {
+                        Errors = errors
+                    };
+
+                    return new BadRequestObjectResult(response);
+                };
+            });
+            return services;
+        }
+
+        private static IServiceCollection AddWebServices(this IServiceCollection services)
+        {
+            services.AddControllers();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
+
+            return services;
+        }
+
+        private static WebApplication UseGlobalErrorHandling(this WebApplication app)
+        {
+            app.UseMiddleware<GlobalErrorHandlingMiddleware>();
+            return app;
+        }
+    }
+}
