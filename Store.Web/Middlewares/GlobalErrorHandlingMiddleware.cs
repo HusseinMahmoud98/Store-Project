@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Store.Domain.Exceptions.BadRequest;
 using Store.Domain.Exceptions.NotFound;
 using Store.Shared.ErrorModels;
 using System.Threading.Tasks;
@@ -41,6 +42,7 @@ namespace Store.Web.Middlewares
                 context.Response.StatusCode = ex switch
                 {
                     NotFoundException => StatusCodes.Status404NotFound,
+                    BadRequestException => StatusCodes.Status400BadRequest,
                     _ => StatusCodes.Status500InternalServerError,
                 };
                     
